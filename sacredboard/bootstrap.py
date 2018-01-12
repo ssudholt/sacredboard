@@ -9,6 +9,7 @@ import sys
 
 import click
 from flask import Flask
+from gevent.pywsgi import WSGIServer
 
 from sacredboard.app.config import jinja_filters
 from sacredboard.app.data.filestorage import FileStorage
@@ -52,8 +53,15 @@ webapi_modules = [proxy, routes, metrics, runs, jinja_filters, server_runner]
 @click.option("--debug", is_flag=True, default=False,
               help="Run the application in Flask debug mode "
                    "(for development).")
+@click.option('--pg_server', default=None)
+@click.option('--pg_database', default=None)
+@click.option('--pg_port', default=5432, type=int)
+@click.option('--pg_credentials_file', default='~/.postgres_credentials')
+@click.option('--pg_user', default=None)
+@click.option('--pg_password', default=None)
 @click.version_option()
-def run(debug, no_browser, m, mu, mc, f, port, sub_url):
+def run(debug, no_browser, m, mu, mc, f, port, sub_url
+        pg_server, pg_database, pg_port, pg_credentials_file, pg_user, pg_password):
     """
     Sacredboard.
 
@@ -98,6 +106,21 @@ sacredboard -m sacred -mc default.runs
         app.config["data"].connect()
     elif f:
         app.config["data"] = FileStorage(f)
+	elif pg_server is not None:
+        if pg_database is None:
+            raise ValueError('You need to supply a PG databse name')
+        if pg_user is not None and pg_password is not None:
+            app.config["data"] = PostgresDataAccess(server=pg_server,
+                                                    database_name=pg_database,
+                                                    port=pg_port,
+                                                    credentials_filepath=None,
+                                                    user=pg_user,
+                                                    pw=pg_password)
+        else:
+            app.config["data"] = PostgresDataAccess(server=pg_server,
+                                                    database_name=pg_database,
+                                                    port=pg_port,
+                                                    credentials_filepath=pg_credentials_file)
     else:
         print("Must specify either a mongodb instance or " +
               "a path to a file storage.\nRun sacredboard --help "
