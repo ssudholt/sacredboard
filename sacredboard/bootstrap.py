@@ -59,6 +59,9 @@ webapi_modules = [proxy, routes, metrics, runs, jinja_filters, server_runner]
 @click.option('--pg_credentials_file', default='~/.postgres_credentials')
 @click.option('--pg_user', default=None)
 @click.option('--pg_password', default=None)
+@click.option("--debug", is_flag=True, default=False,
+              help="Run the application in Flask debug mode "
+                   "(for development).")
 @click.version_option()
 def run(debug, no_browser, m, mu, mc, f, port, sub_url
         pg_server, pg_database, pg_port, pg_credentials_file, pg_user, pg_password):
